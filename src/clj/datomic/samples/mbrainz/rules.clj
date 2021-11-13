@@ -81,7 +81,7 @@
      [?t :track/duration ?len]
      [(< ?len ?max)]]
 
-    [(track-search ?q ?track)
+    #_ [(track-search ?q ?track)
      [(fulltext $ :track/name ?q) [[?track ?tname]]]]])
 
 (def ^{:doc "A convenient collection of rules from this namespace.  Each

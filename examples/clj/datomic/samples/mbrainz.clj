@@ -8,7 +8,8 @@
 
 (ns datomic.samples.mbrainz
   (:require [clojure.pprint :refer (pprint)]
-            [datomic.api :as d]
+            [datomic.client.api :as d]
+            #_ [datomic.api :as d]
             [datomic.samples.mbrainz.rules :refer (rules)]))
 
 ;; this file is intended for evaluation, form-by-form, at the REPL
@@ -16,9 +17,13 @@
 ;;;;;;;;;;;;;;; get a connection ;;;;;;;;;;;;;;;;;;
 
 ;; Replace with your transactor's connection information
-(def uri "datomic:free://localhost:4334/mbrainz-1968-1973")
+#_ (def uri "datomic:free://localhost:4334/mbrainz-1968-1973")
 
-(def conn (d/connect uri))
+#_ (def conn (d/connect uri))
+
+(def client (d/client {:server-type :dev-local
+                       :system "dev"}))
+(def conn (d/connect client {:db-name "mbrainz-1968-1973"}))
 (def db (d/db conn))
 
 ;;;;;;;;;;;;;;; REPL safety and convenience ;;;;;;;;;;;;;;;;;;
@@ -28,6 +33,8 @@
 
 ;;;;;;;;;;;;;;; data queries ;;;;;;;;;;;;;;;;;;
 
+(comment "What are the titles of all the tracks John Lennon played on?")
+
 (d/q '[:find ?title
        :in $ ?artist-name
        :where
@@ -36,6 +43,9 @@
        [?t :track/name ?title]]
      db
      "John Lennon")
+
+(comment "What are the titles, album names, and release years
+          of John Lennon's tracks?")
 
 (d/q '[:find ?title ?album ?year
        :in $ ?artist-name
@@ -49,6 +59,9 @@
        [?r :release/year  ?year]]
      db
      "John Lennon")
+
+(comment "What are the titles, album names, and release years 
+          of the John Lennon tracks released before 1970?")
 
 (d/q '[:find ?title ?album ?year
        :in $ ?artist-name
@@ -64,6 +77,9 @@
      db
      "John Lennon")
 
+(comment "What are the titles, album names, and release years
+          of John Lennon's tracks?")
+
 (d/q '[:find ?title ?album ?year
        :in $ % ?artist-name
        :where
@@ -77,6 +93,9 @@
      rules
      "John Lennon")
 
+(comment "What are the titles, artists, album names, and release years
+          of all tracks having the word \"always\" in their titles?")
+
 (d/q '[:find ?title ?artist ?album ?year
        :in $ % ?search
        :where
@@ -86,10 +105,15 @@
      rules
      "always")
 
+(comment "Who collaborated with one of the Beatles?")
+
 (d/q '[:find ?aname ?aname2
        :in $ % [?aname ...]
        :where (collab ?aname ?aname2)]
      db rules ["John Lennon" "Paul McCartney" "George Harrison" "Ringo Starr"])
+
+(comment "Who either directly collaborated with George Harrison, 
+          or collaborated with one of his collaborators?")
 
 (d/q '[:find ?aname ?aname2
        :in $ % [?aname ...]
@@ -97,6 +121,8 @@
      db
      rules
      ["George Harrison"])
+
+(comment "Who collaborated with Diana Ross or of her collaborators? (via recursion)")
 
 (def query '[:find ?aname2
              :in $ % [[?aname]]
@@ -110,6 +136,7 @@
           rules
           [["Diana Ross"]]))
 
+(comment "Which artists have songs that might be covers of Bill Withers?")
 
 (d/q '[:find ?aname ?tname
        :in $ ?artist-name
